@@ -43,7 +43,13 @@ window.GLOSSARY = {
     source:{url:"https://arxiv.org/abs/1709.00084", label:"标准教材 · Colledanchise & Ögren 2018"}},
   hier:{abbr:"HRL", en:"Hierarchical Reinforcement Learning", zh:"分层强化学习",
     def:"把策略分解为多个时间尺度层级（高层选子目标/技能、低层执行原始动作），用时间抽象简化长时序任务的学习。",
-    source:{url:"http://incompleteideas.net/papers/SPS-98.pdf", label:"options 框架 · Sutton et al. 1999"}}
+    source:{url:"http://incompleteideas.net/papers/SPS-98.pdf", label:"options 框架 · Sutton et al. 1999"}},
+  selfplay:{abbr:"自博弈", en:"Self-Play", zh:"自我对弈",
+    def:"让智能体反复与自身、或自身的历史版本对战来自我提升的训练范式：对手随训练同步变强，策略被持续逼到更高水平。本文里的 FSP、PBT 联赛都是它的具体实现，AlphaGo/AlphaZero 亦属此列。",
+    source:{url:"https://www.science.org/doi/10.1126/science.aar6404", label:"代表作 · AlphaZero, Silver et al. 2018"}},
+  emergence:{abbr:"涌现", en:"Emergent Behavior", zh:"涌现（行为）",
+    def:"未被显式编程、也没写进奖励函数，却从简单目标的优化中自发长出来的高层行为。本文指传球/跑位/分工——奖励里根本没有“传球”一项，它是自博弈中被抢断压力逼出的最优解，而非人工设计。",
+    source:null}
 };
 
 (function(){
