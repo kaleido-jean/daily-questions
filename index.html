@@ -8,15 +8,18 @@
 :root{
   --bg:#f7f9f6; --surface:#ffffff; --ink:#1e2823; --ink-soft:#55645b;
   --line:#dde5df; --accent:#0e7a4e; --accent-soft:#e3f0e9; --chip-bg:#eef3ef;
+  --basket:#b98a4b; --basket-dark:#8f6636;
 }
 @media (prefers-color-scheme: dark){
   :root{
     --bg:#0f1512; --surface:#161e1a; --ink:#e4ebe6; --ink-soft:#93a29a;
     --line:#26332c; --accent:#43c98a; --accent-soft:#15291f; --chip-bg:#1d2822;
+    --basket:#a9793d; --basket-dark:#6f4e28;
   }
 }
 *{box-sizing:border-box}
-body{margin:0; background:var(--bg); color:var(--ink);
+html,body{margin:0}
+body{background:var(--bg); color:var(--ink);
   font-family:-apple-system,"PingFang SC","Noto Sans CJK SC","Source Han Sans SC","Microsoft YaHei",sans-serif;
   line-height:1.8}
 .wrap{max-width:42rem; margin:0 auto; padding:3rem 1.25rem 4rem}
@@ -34,10 +37,38 @@ a:hover{text-decoration:underline}
 .issue .meta{font-size:.78rem; color:var(--ink-soft); font-family:ui-monospace,Menlo,monospace}
 .alt{font-size:.82rem; color:var(--ink-soft); margin-top:.5rem}
 footer{margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--line); font-size:.82rem; color:var(--ink-soft)}
+
+/* ---------- 开屏动画 ---------- */
+#intro{position:fixed; inset:0; z-index:50; background:var(--bg);
+  overflow:hidden; transition:opacity .8s ease; touch-action:manipulation;
+  user-select:none; -webkit-user-select:none; cursor:pointer}
+#intro.gone{opacity:0; pointer-events:none}
+#introCanvas{position:absolute; inset:0; width:100%; height:100%; display:block}
+.intro-ui{position:absolute; left:0; right:0; bottom:max(2.2rem, env(safe-area-inset-bottom));
+  text-align:center; pointer-events:none; padding:0 1.2rem}
+.intro-hint{font-size:1rem; color:var(--ink-soft); margin:0 0 .8rem; transition:opacity .35s}
+.intro-hint b{color:var(--accent)}
+.dots{display:inline-flex; gap:.45rem}
+.dot{width:.7rem; height:.7rem; border-radius:99px; background:var(--line);
+  transition:background .25s, transform .25s}
+.dot.on{background:var(--accent); transform:scale(1.18)}
+.intro-title{position:absolute; top:max(2.4rem, env(safe-area-inset-top)); left:0; right:0;
+  text-align:center; pointer-events:none}
+.intro-title .k{font-family:"Noto Serif SC","Source Han Serif SC",serif; font-size:1.5rem; font-weight:700; color:var(--ink)}
+.intro-title .s{display:block; font-size:.72rem; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--accent); margin-top:.35rem; font-weight:600}
+#introSkip{position:absolute; top:max(1.3rem, env(safe-area-inset-top)); right:1.2rem;
+  background:transparent; border:1px solid var(--line); color:var(--ink-soft); font-size:.78rem;
+  padding:.35rem .8rem; border-radius:99px; cursor:pointer; font-family:inherit}
+#introSkip:hover{border-color:var(--accent); color:var(--accent)}
+@media (prefers-reduced-motion: reduce){ #intro{display:none} }
 </style>
+<noscript><style>#intro{display:none}</style></noscript>
 </head>
 <body>
-<div class="wrap">
+
+<!-- 首页正文 -->
+<div class="wrap" id="app">
   <div class="eyebrow">问题篓子 · 机器人篇</div>
   <h1>用生活里的现象，读机器人前沿</h1>
   <p class="tag">从一个简短的问题出发，把学界顶会、开源框架与工业界的最新进展，写成一份图文并茂、可睡前阅读的深度综述。</p>
@@ -55,5 +86,198 @@ footer{margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--line); fo
     原始笔记与术语表见私有知识库 kaleido-wiki。
   </footer>
 </div>
+
+<!-- 开场动画：问题篓子倒球（matter.js 物理 + 自绘精灵球）-->
+<div id="intro" aria-hidden="true">
+  <canvas id="introCanvas"></canvas>
+  <div class="intro-title"><span class="k">问题篓子</span><span class="s">Question Basket</span></div>
+  <button id="introSkip" type="button">跳过 ›</button>
+  <div class="intro-ui">
+    <p class="intro-hint" id="introHint">点击篓子，把问题一个个倒出来</p>
+    <span class="dots" id="introDots"></span>
+  </div>
+</div>
+
+<script src="vendor/matter.min.js"></script>
+<script>
+(function(){
+  var intro = document.getElementById('intro');
+  if(!intro) return;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var seen=false; try{ seen=sessionStorage.getItem('introSeen')==='1'; }catch(e){}
+  // 库没加载成功 / 减少动效 / 已看过 → 直接进正文
+  if(reduce || seen || typeof Matter==='undefined'){ remove(); return; }
+  function remove(){ if(intro && intro.parentNode) intro.parentNode.removeChild(intro); }
+
+  var M=Matter, Engine=M.Engine, World=M.World, Bodies=M.Bodies, Body=M.Body, Composite=M.Composite;
+  var canvas=document.getElementById('introCanvas'), ctx=canvas.getContext('2d');
+  var hint=document.getElementById('introHint'), dotsWrap=document.getElementById('introDots'), skipBtn=document.getElementById('introSkip');
+
+  function cssv(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  var COL={};
+  function readColors(){ ['bg','ink','ink-soft','accent','surface','line','basket','basket-dark'].forEach(function(k){ COL[k]=cssv('--'+k); }); }
+  readColors();
+
+  var TARGET=5, dropped=0, state='wait';   // wait → spray → done
+  var dots=[]; for(var i=0;i<TARGET;i++){ var d=document.createElement('span'); d.className='dot'; dotsWrap.appendChild(d); dots.push(d); }
+  function updateDots(){ for(var i=0;i<dots.length;i++) dots[i].className='dot'+(i<dropped?' on':''); }
+
+  var DPR=Math.min(window.devicePixelRatio||1,2), W=0,H=0, R=26;
+  var engine=Engine.create(); engine.gravity.y=1.3;
+  var world=engine.world;
+  var walls=[], balls=[], basket=null;
+
+  function build(){
+    W=intro.clientWidth; H=intro.clientHeight;
+    canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+    R=Math.max(17, Math.min(W,H)*0.043);
+
+    // 清空
+    Composite.clear(world,false,true); walls=[]; balls=[];
+    var bw=Math.min(W*0.6,340), topY=H*0.5, botY=Math.min(H*0.5+Math.min(H*0.27,240), H-40);
+    var halfTop=bw/2, halfBot=bw/2*0.66, th=Math.max(10,R*0.5);
+    basket={cx:W/2, top:topY, bottom:botY, halfTop:halfTop, halfBot:halfBot};
+
+    var opt={isStatic:true, restitution:0.35, friction:0.55};
+    // 左右斜壁（用细长矩形沿梯形边旋转）
+    var lx0=W/2-halfTop, lx1=W/2-halfBot, ly0=topY, ly1=botY;
+    var rx0=W/2+halfTop, rx1=W/2+halfBot;
+    var len=Math.hypot(lx1-lx0, ly1-ly0);
+    var langle=Math.atan2(ly1-ly0, lx1-lx0);
+    var leftW=Bodies.rectangle((lx0+lx1)/2, (ly0+ly1)/2, len, th, opt); Body.setAngle(leftW, langle);
+    var rangle=Math.atan2(ly1-ly0, rx1-rx0);
+    var rightW=Bodies.rectangle((rx0+rx1)/2, (ly0+ly1)/2, len, th, opt); Body.setAngle(rightW, rangle);
+    // 篓底
+    var floor=Bodies.rectangle(W/2, botY, halfBot*2+th, th, opt);
+    // 屏幕地面（自由球落到底部滚动）
+    var ground=Bodies.rectangle(W/2, H+R, W*3, R*2, opt);
+    walls=[leftW,rightW,floor,ground];
+    Composite.add(world, walls);
+
+    // 装 8 个球
+    for(var i=0;i<8;i++){
+      var bx=W/2 + (Math.random()-0.5)*halfBot*1.3;
+      var by=topY + R + Math.random()*(botY-topY-2*R);
+      var b=Bodies.circle(bx,by,R,{restitution:0.4, friction:0.35, frictionAir:0.006, density:0.0016});
+      b.plugin={free:false, hue:Math.random()<0.5};
+      balls.push(b); Composite.add(world,b);
+    }
+  }
+
+  function insideBalls(){ return balls.filter(function(b){ return !b.plugin.free; }); }
+
+  function tap(){
+    if(state!=='wait') return;
+    // 篓子"振动"：给篓内球一个轻微抖动（不能大到把球弹出篓外）
+    insideBalls().forEach(function(b){
+      Body.setVelocity(b, {x:b.velocity.x+(Math.random()-0.5)*2.4, y:b.velocity.y-Math.random()*2.2-0.4});
+      Body.setAngularVelocity(b, (Math.random()-0.5)*0.25);
+    });
+    // 倒出最上面一个
+    var ins=insideBalls();
+    if(ins.length){
+      ins.sort(function(a,c){ return a.position.y-c.position.y; });
+      var top=ins[0]; top.plugin.free=true;
+      Body.setPosition(top, {x:basket.cx, y:basket.top-R});
+      var dir=(dropped%2===0)?1:-1;
+      Body.setVelocity(top, {x:dir*(3.5+Math.random()*2), y:-(8+Math.random()*2)});
+      Body.setAngularVelocity(top, dir*0.32);
+      dropped++; updateDots();
+    }
+    if(dropped>=TARGET){
+      hint.style.opacity='0'; state='spray';
+      // 剩余球 + 已落地球一起往外喷
+      balls.forEach(function(b){
+        b.plugin.free=true;
+        Body.setVelocity(b, {x:(b.position.x<W/2?-1:1)*(6+Math.random()*8), y:-(12+Math.random()*8)});
+        Body.setAngularVelocity(b,(Math.random()-0.5)*0.6);
+      });
+      setTimeout(finish, 1200);
+    }else{
+      hint.innerHTML='再点 <b>'+(TARGET-dropped)+'</b> 次，把问题倒出来';
+    }
+  }
+
+  var finished=false;
+  function finish(){ if(finished)return; finished=true;
+    try{ sessionStorage.setItem('introSeen','1'); }catch(e){}
+    intro.classList.add('gone');
+    setTimeout(remove, 850);
+  }
+
+  /* ---- 绘制精灵球 ---- */
+  function roundRect(x,y,w,h,r){ ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+  function drawBall(b){
+    var r=R;
+    ctx.save(); ctx.translate(b.position.x, b.position.y); ctx.rotate(b.angle);
+    var topc=b.plugin.hue?COL.accent:'#d94f4f';
+    ctx.fillStyle=topc; ctx.beginPath(); ctx.arc(0,0,r,Math.PI,0); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=COL.surface; ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=COL.ink; ctx.fillRect(-r,-r*0.13,r*2,r*0.26);
+    ctx.fillStyle=COL.surface; ctx.beginPath(); ctx.arc(0,0,r*0.28,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle=COL.ink; ctx.lineWidth=Math.max(1.5,r*0.09); ctx.beginPath(); ctx.arc(0,0,r*0.28,0,Math.PI*2); ctx.stroke();
+    ctx.lineWidth=Math.max(1.5,r*0.07); ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+    // 问号贴纸
+    ctx.rotate(-0.22);
+    var sw=r*0.74, sx=-r*0.44, sy=-r*0.46;
+    ctx.fillStyle='#fff'; roundRect(sx,sy,sw,sw,r*0.16); ctx.fill();
+    ctx.strokeStyle=COL.line; ctx.lineWidth=Math.max(1,r*0.05); roundRect(sx,sy,sw,sw,r*0.16); ctx.stroke();
+    ctx.fillStyle=COL.accent; ctx.font='700 '+(sw*0.84)+'px -apple-system,"PingFang SC",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('?', sx+sw/2, sy+sw*0.56);
+    ctx.restore();
+  }
+
+  function drawBasket(){
+    var t=basket.top, bo=basket.bottom, ht=basket.halfTop, hb=basket.halfBot, cx=basket.cx;
+    ctx.lineJoin='round';
+    ctx.beginPath(); ctx.moveTo(cx-ht,t); ctx.lineTo(cx+ht,t); ctx.lineTo(cx+hb,bo); ctx.lineTo(cx-hb,bo); ctx.closePath();
+    var g=ctx.createLinearGradient(0,t,0,bo); g.addColorStop(0,COL.basket); g.addColorStop(1,COL['basket-dark']);
+    ctx.fillStyle=g; ctx.fill();
+    ctx.strokeStyle=COL['basket-dark']; ctx.globalAlpha=0.35; ctx.lineWidth=Math.max(1,R*0.06);
+    for(var s=-3;s<=3;s++){ var f=s/3; ctx.beginPath(); ctx.moveTo(cx+ht*f,t); ctx.lineTo(cx+hb*f,bo); ctx.stroke(); }
+    for(var r=1;r<5;r++){ var yy=t+(bo-t)*r/5, hh=ht+(hb-ht)*r/5; ctx.beginPath(); ctx.moveTo(cx-hh,yy); ctx.lineTo(cx+hh,yy); ctx.stroke(); }
+    ctx.globalAlpha=1;
+    // 后口沿
+    ctx.strokeStyle=COL.basket; ctx.lineWidth=Math.max(3,R*0.34);
+    ctx.beginPath(); ctx.ellipse(cx,t,ht,ht*0.16,0,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle=COL['basket-dark']; ctx.lineWidth=Math.max(1,R*0.12);
+    ctx.beginPath(); ctx.ellipse(cx,t,ht,ht*0.16,0,0,Math.PI*2); ctx.stroke();
+  }
+  function drawRim(){ // 前口沿：压住篓内球顶，营造"从篓口探出"
+    ctx.strokeStyle=COL.basket; ctx.lineWidth=Math.max(3,R*0.34);
+    ctx.beginPath(); ctx.ellipse(basket.cx,basket.top,basket.halfTop,basket.halfTop*0.16,0,Math.PI,0); ctx.stroke();
+  }
+
+  function render(){
+    ctx.clearRect(0,0,W,H);
+    drawBasket();
+    balls.forEach(function(b){ if(!b.plugin.free) drawBall(b); });
+    drawRim();
+    balls.forEach(function(b){ if(b.plugin.free) drawBall(b); });
+  }
+
+  var last=0;
+  function loop(ts){
+    if(!intro.parentNode) return;
+    if(!last)last=ts; var dt=Math.min(1000/30, ts-last); last=ts;
+    Engine.update(engine, dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  // 事件
+  intro.addEventListener('pointerdown', function(e){ e.preventDefault(); tap(); });
+  skipBtn.addEventListener('pointerdown', function(e){ e.stopPropagation(); e.preventDefault(); finish(); });
+  var rt;
+  window.addEventListener('resize', function(){ clearTimeout(rt); rt=setTimeout(function(){ if(!finished){ readColors(); build(); dropped=Math.min(dropped,TARGET); updateDots(); } }, 200); });
+  var mq=window.matchMedia('(prefers-color-scheme: dark)'); if(mq.addEventListener) mq.addEventListener('change', readColors);
+
+  build();
+  requestAnimationFrame(loop);
+})();
+</script>
 </body>
 </html>
