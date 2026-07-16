@@ -1,4 +1,8 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>机器人会传球吗？——研究进展综述 №001</title>
 <style>
 :root{
@@ -61,7 +65,7 @@ figcaption{font-size:.78rem; color:var(--ink-soft); margin-top:.45rem; line-heig
 .num{font-variant-numeric:tabular-nums; font-weight:600; color:var(--accent)}
 dfn{font-style:normal; color:var(--accent); border-bottom:1px dotted var(--accent); cursor:pointer}
 dfn:hover{border-bottom-style:solid}
-#pop{position:absolute; z-index:9; max-width:22rem; background:var(--surface); color:var(--ink);
+#pop{position:absolute; z-index:9; max-width:min(22rem, calc(100vw - 24px)); background:var(--surface); color:var(--ink);
   border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:8px;
   padding:.7rem 2rem .7rem .9rem; font-size:.85rem; line-height:1.7; box-shadow:0 6px 24px rgba(0,0,0,.18)}
 #pop b{color:var(--accent); display:block; margin-bottom:.15rem}
@@ -81,7 +85,8 @@ details.dossier[open] summary{border-bottom:1px solid var(--line)}
 .src{font-size:.82rem; color:var(--ink-soft); line-height:2}
 hr{border:none; border-top:1px solid var(--line); margin:2.5rem 0}
 </style>
-
+</head>
+<body>
 <div class="wrap">
 <header>
   <div class="eyebrow">问题篓子 · 机器人篇 № 001</div>
@@ -266,3 +271,6 @@ document.addEventListener('keydown',e=>{
   if((e.key==='Enter'||e.key===' ')&&document.activeElement.matches('dfn[data-t]')){e.preventDefault();openPop(document.activeElement);}
 });
 </script>
+
+</body>
+</html>
