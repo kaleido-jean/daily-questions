@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>术语表 · 问题篓子</title>
+<style>
+:root{
+  --bg:#f7f9f6; --surface:#ffffff; --ink:#1e2823; --ink-soft:#55645b;
+  --line:#dde5df; --accent:#0e7a4e; --accent-soft:#e3f0e9; --chip-bg:#eef3ef;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f1512; --surface:#161e1a; --ink:#e4ebe6; --ink-soft:#93a29a;
+    --line:#26332c; --accent:#43c98a; --accent-soft:#15291f; --chip-bg:#1d2822;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg); color:var(--ink);
+  font-family:-apple-system,"PingFang SC","Noto Sans CJK SC","Source Han Sans SC","Microsoft YaHei",sans-serif; line-height:1.8}
+.wrap{max-width:44rem; margin:0 auto; padding:2.6rem 1.25rem 4rem}
+.eyebrow{font-size:.78rem; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); font-weight:600}
+h1{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",Georgia,serif; font-size:1.9rem; margin:.5rem 0 .3rem}
+.tag{color:var(--ink-soft); margin:0 0 2rem; font-size:.95rem}
+a.back{color:var(--accent); text-decoration:none; font-size:.85rem}
+a.back:hover{text-decoration:underline}
+.gloss{display:grid; grid-template-columns:1fr; gap:.9rem; margin-top:1.5rem}
+@media(min-width:640px){ .gloss{grid-template-columns:1fr 1fr} }
+.gterm{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:.9rem 1.05rem}
+.gterm .gt-abbr{font-weight:700; color:var(--accent); font-size:1.05rem}
+.gterm .gt-full{color:var(--ink-soft); font-size:.78rem; margin:.15rem 0 .5rem; line-height:1.5}
+.gterm .gt-def{font-size:.9rem; margin:0 0 .55rem}
+.gterm .gt-src{display:inline-block; font-size:.8rem; font-weight:600; color:var(--accent); text-decoration:none}
+.gterm .gt-src:hover{text-decoration:underline}
+footer{margin-top:3rem; padding-top:1.4rem; border-top:1px solid var(--line); font-size:.82rem; color:var(--ink-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="./">‹ 返回问题篓子</a>
+  <div class="eyebrow" style="margin-top:1rem">问题篓子 · 术语表</div>
+  <h1>术语表</h1>
+  <p class="tag">全站文章共用这一份术语库：同一个词在任何文章里都指向这里的同一份定义。每条给出缩写、英文与中文全称、定义，以及可点击的原始论文链接。</p>
+  <div class="gloss" id="glossMount"></div>
+  <footer>术语库单一数据源：<code>assets/glossary.js</code>。文章内的术语点击即弹出同一份释义。</footer>
+</div>
+<script src="assets/glossary.js"></script>
+<script>
+  var mount=document.getElementById('glossMount');
+  if(window.renderGlossaryList) window.renderGlossaryList(mount);
+</script>
+</body>
+</html>
