@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>十万个为什么 · 机器人篇</title>
+<style>
+:root{
+  --bg:#f7f9f6; --surface:#ffffff; --ink:#1e2823; --ink-soft:#55645b;
+  --line:#dde5df; --accent:#0e7a4e; --accent-soft:#e3f0e9; --chip-bg:#eef3ef;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f1512; --surface:#161e1a; --ink:#e4ebe6; --ink-soft:#93a29a;
+    --line:#26332c; --accent:#43c98a; --accent-soft:#15291f; --chip-bg:#1d2822;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink);
+  font-family:-apple-system,"PingFang SC","Noto Sans CJK SC","Source Han Sans SC","Microsoft YaHei",sans-serif;
+  line-height:1.8}
+.wrap{max-width:42rem; margin:0 auto; padding:3rem 1.25rem 4rem}
+.eyebrow{font-size:.78rem; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); font-weight:600}
+h1{font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",Georgia,serif; font-size:2.1rem; margin:.5rem 0 .3rem}
+.tag{color:var(--ink-soft); margin:0 0 2.5rem}
+a{color:var(--accent); text-decoration:none}
+a:hover{text-decoration:underline}
+.issue{display:block; background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  padding:1.3rem 1.4rem; margin:1rem 0; color:inherit; text-decoration:none; transition:border-color .15s, transform .15s}
+.issue:hover{border-color:var(--accent); transform:translateY(-2px); text-decoration:none}
+.issue .no{font-size:.75rem; font-family:ui-monospace,Menlo,monospace; color:var(--accent); letter-spacing:.05em}
+.issue h2{font-family:"Noto Serif SC","Source Han Serif SC",serif; font-size:1.3rem; margin:.3rem 0 .4rem}
+.issue p{margin:.3rem 0 .7rem; color:var(--ink-soft); font-size:.95rem}
+.issue .meta{font-size:.78rem; color:var(--ink-soft); font-family:ui-monospace,Menlo,monospace}
+.alt{font-size:.82rem; color:var(--ink-soft); margin-top:.5rem}
+footer{margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--line); font-size:.82rem; color:var(--ink-soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">十万个为什么 · 机器人篇</div>
+  <h1>用生活里的现象，读机器人前沿</h1>
+  <p class="tag">从一个简短的问题出发，把学界顶会、开源框架与工业界的最新进展，写成一份图文并茂、可睡前阅读的深度综述。</p>
+
+  <a class="issue" href="reports/001-robot-passing.html">
+    <span class="no">№ 001</span>
+    <h2>机器人会传球吗？</h2>
+    <p>仿真里五年前就解决的事，为什么至今没能在人形机器人身上发生。覆盖 DeepMind、四足真机自博弈、RoboCup 冠军系统与 RoboNaldo。</p>
+    <span class="meta">2026-07-15 · arXiv / CoRL / ICRA / Science Robotics / RoboCup</span>
+  </a>
+  <p class="alt">└ 同一篇的 <a href="reports/001-robot-passing-structured.html">结构版（卡片+字段表布局）</a></p>
+
+  <footer>
+    图片均取自对应论文（arXiv），仅作研究学习用途。<br>
+    原始笔记与术语表见私有知识库 kaleido-wiki。
+  </footer>
+</div>
+</body>
+</html>
