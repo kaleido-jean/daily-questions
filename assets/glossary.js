@@ -82,7 +82,28 @@ window.GLOSSARY = {
     source:null},
   forgetting:{abbr:"灾难性遗忘", en:"Catastrophic Forgetting", zh:"灾难性遗忘",
     def:"神经网络学新任务时会覆盖旧任务的权重，导致旧技能急剧退化。这正是“加一个新技能就得整体重训”的根源，也是持续/增量学习要解决的核心难题。",
-    source:{url:"https://arxiv.org/abs/1612.00796", label:"代表方案 · EWC, Kirkpatrick et al. 2017"}}
+    source:{url:"https://arxiv.org/abs/1612.00796", label:"代表方案 · EWC, Kirkpatrick et al. 2017"}},
+  ppo:{abbr:"PPO", en:"Proximal Policy Optimization", zh:"近端策略优化",
+    def:"目前机器人强化学习最常用的算法：每次只让策略在旧策略附近“小步”更新（用裁剪限制更新幅度），既稳定又容易并行采样。本站多篇工作（ANYmal 开门、DoorMan 教师等）的训练底座。",
+    source:{url:"https://arxiv.org/abs/1707.06347", label:"原论文 · Schulman et al. 2017"}},
+  il:{abbr:"模仿学习", en:"Imitation Learning", zh:"模仿学习",
+    def:"不写奖励函数，直接让机器人模仿人类示教的动作轨迹（遥操作、动捕等采集）。优点是能学到难以用奖励描述的精细行为；缺点是数据贵、遇到示教没覆盖的状态容易失效。与强化学习是互补的两大范式。",
+    source:null},
+  act:{abbr:"ACT", en:"Action Chunking Transformer", zh:"动作分块 Transformer",
+    def:"模仿学习的主流架构：用 Transformer 一次预测未来一段“动作块”（而非单步动作），配合 CVAE 编码示教风格，大幅降低误差累积。原为双臂精细操作提出，现广泛用于人形与移动操作。",
+    source:{url:"https://arxiv.org/abs/2304.13705", label:"原论文 · Zhao et al. RSS 2023"}},
+  impedance:{abbr:"阻抗控制", en:"Impedance / Admittance Control", zh:"阻抗/导纳控制",
+    def:"让机器人末端表现得像“弹簧+阻尼”而不是死板的位置伺服：受到外力时会顺从地退让，力大时也不会硬顶。开弹簧门这类持续受力任务的关键——刚度太高会触发急停或损坏，太低则推不动门。",
+    source:{url:"https://ieeexplore.ieee.org/document/1104644", label:"奠基 · Hogan 1985"}},
+  domainrand:{abbr:"域随机化", en:"Domain Randomization", zh:"域随机化",
+    def:"仿真训练时故意把物理参数（质量、摩擦、门的弹簧刚度）和外观（材质、光照、相机）大范围随机抖动，逼策略学出对参数不敏感的鲁棒行为，从而弥合仿真与现实的差距。sim2real 的第一支柱。",
+    source:{url:"https://arxiv.org/abs/1703.06907", label:"奠基 · Tobin et al. 2017"}},
+  articulated:{abbr:"铰接物体", en:"Articulated Object", zh:"铰接物体",
+    def:"由关节（铰链、滑轨）连接的多刚体物体：门、抽屉、柜子、笔记本电脑。操作它们必须顺着关节约束运动——门只能绕铰链转。“估计关节参数（轴在哪、阻力多大）再顺势操作”是这一领域的核心范式，门是其中最典型也最难的一类。",
+    source:{url:"https://arxiv.org/abs/2101.02692", label:"代表基准 · PartNet-Mobility/SAPIEN"}},
+  teleop:{abbr:"遥操作", en:"Teleoperation", zh:"遥操作",
+    def:"人通过 VR 头显、动捕或手柄实时驱动机器人完成任务。既是采集模仿学习示教数据的主要手段，也是评估“自主策略比人操作强多少”的基线。",
+    source:null}
 };
 
 (function(){
