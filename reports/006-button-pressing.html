@@ -116,7 +116,7 @@ table.matrix{border-collapse:collapse; font-size:.8rem; min-width:100%; line-hei
   </ol>
 </div>
 
-<div class="pull">⚠️ 一个绕不开的前提：本期几乎所有可用的仿真栈（Isaac Sim / Isaac Lab / VIRAL / unitree_sim_isaaclab）都要求 <strong>Ubuntu 22.04 + NVIDIA GPU</strong>。macOS 上<strong>一个都跑不了</strong>，得先备一台 Linux + N 卡机器。唯一的例外是 MuJoCo 系（Meta-World、mjlab、RoboCasa），Mac 上能跑。</div>
+<div class="pull">⚠️ 一个绕不开的前提：本期几乎所有可用的仿真栈（Isaac Sim / Isaac Lab / VIRAL / unitree_sim_isaaclab）都要求 <strong>Ubuntu + NVIDIA GPU</strong>，且各栈对显存与显卡代次的要求差异很大。这台机器<strong>不必是你的开发机</strong>——openpi 官方就推荐把模型放在 GPU 服务器上、通过 websocket 把动作流给机器人。具体配置见下文<a href="#hw">跑这些要什么设备</a>一节。MuJoCo 系（Meta-World、mjlab、RoboCasa）是例外，CPU 即可、macOS 也能跑。</div>
 
 <h2>2018 年那次"已解决"</h2>
 
@@ -348,9 +348,58 @@ nodes/real_robot/test_gemini_detection.py    ← 用 VLM 做检测的先例</div
   </ol>
 </div>
 
+<h2 id="hw">跑这些要什么设备</h2>
+
+<p>上面每一级梯子背后都有一张硬件账单，而各家文档写得很散。下面的数字全部来自官方文档原文，不是估算。</p>
+
+<h3>底座：Isaac Sim 官方系统要求</h3>
+
+<div class="mtable-wrap">
+<table class="matrix">
+  <thead><tr><th></th><th>最低</th><th>推荐</th><th>理想</th></tr></thead>
+  <tbody>
+    <tr><td>系统</td><td style="white-space:normal">Ubuntu 22.04 / 24.04 或 Windows 11</td><td>同</td><td>同</td></tr>
+    <tr><td>CPU</td><td style="white-space:normal">i7（7 代）/ Ryzen 5，4 核</td><td style="white-space:normal">i7（9 代）/ Ryzen 7，8 核</td><td style="white-space:normal">i9 / Threadripper，16 核</td></tr>
+    <tr><td>内存</td><td class="h"><strong>32 GB</strong></td><td>64 GB</td><td>64 GB</td></tr>
+    <tr><td>GPU</td><td class="h"><strong>RTX 4080</strong></td><td>RTX 5080</td><td>RTX PRO 6000 Blackwell</td></tr>
+    <tr><td>显存</td><td class="h"><strong>16 GB</strong></td><td>16 GB</td><td>48 GB</td></tr>
+    <tr><td>硬盘</td><td>50 GB SSD</td><td>500 GB SSD</td><td>1 TB NVMe</td></tr>
+    <tr><td>驱动</td><td colspan="3" style="white-space:normal">Linux ≥ 595.58.03</td></tr>
+  </tbody>
+  <caption>来源：Isaac Sim 官方 System Requirements（x86_64）。</caption>
+</table>
+</div>
+
+<h3>各栈在此之上的额外约束</h3>
+
+<div class="mtable-wrap">
+<table class="matrix">
+  <thead><tr><th>栈</th><th>文档写明的要求</th><th>要注意的</th></tr></thead>
+  <tbody>
+    <tr><td>unitree_sim_isaaclab</td><td style="text-align:left;white-space:normal">仅在 <strong>RTX 3080 / 3090 / 4090</strong> 上测试过</td><td style="text-align:left;white-space:normal"><strong>RTX 50 系必须配 Isaac Sim 5.0.0</strong>；官方提供 Docker（Ubuntu 22.04 + IsaacSim 5.1）</td></tr>
+    <tr><td>VIRAL / DoorMan</td><td style="text-align:left;white-space:normal">Ubuntu 22.04、驱动 ≥ 535、Isaac Sim 5.1、Python 3.11、torch 2.7.0/cu128</td><td style="text-align:left;white-space:normal">含 ONNX 导出，可部署到真机</td></tr>
+    <tr><td><strong>Isaac-GR00T</strong></td><td style="text-align:left;white-space:normal">推理 <strong>16 GB+ 显存</strong>（4090 / L40 / H100 / Jetson Thor）；<strong>微调建议 40 GB+，推荐 H100 或 L40</strong></td><td style="text-align:left;white-space:normal">CUDA 12.8 + Python 3.12；Ubuntu 25.10+ 自带 ffmpeg 8 会让 torchcodec 加载失败，需降到 &lt;8</td></tr>
+    <tr><td><strong>openpi</strong></td><td style="text-align:left;white-space:normal">推理 <strong>&gt; 8 GB</strong>（RTX 4090）；LoRA 微调 <strong>&gt; 22.5 GB</strong>（RTX 4090）；全量微调 <strong>&gt; 70 GB</strong>（A100 80 GB / H100）</td><td style="text-align:left;white-space:normal">明写<strong>只支持 Ubuntu 22.04</strong>；官方支持远程推理</td></tr>
+    <tr><td>MuJoCo 系</td><td style="text-align:left;white-space:normal">CPU 即可</td><td class="y" style="text-align:left;white-space:normal">macOS 能跑，是没有 N 卡时唯一能动手的一档</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>按目标反推该配什么</h3>
+
+<p>要把"造按钮任务 + 全身够取 + sim2real"整条走通，甜点位是 <strong>Ubuntu 22.04 + RTX 4090（24 GB）+ 64 GB 内存 + 1 TB NVMe</strong>。这一档能吃下 Isaac Sim 5.1、<code>unitree_sim_isaaclab</code>（4090 正是官方测过的卡）、VIRAL 全流程，以及 openpi 的 LoRA 微调。</p>
+
+<div class="routes">
+  <div class="route"><b>坑一 · 别急着买 50 系</b><span>Unitree 官方只测过 3080/3090/4090，50 系要锁 Isaac Sim 5.0.0，会限制你用其它依赖新版本的栈。</span></div>
+  <div class="route"><b>坑二 · RTX 4080 吃不下 VLA 微调</b><span>16 GB 踩在 Isaac Sim 的最低线上，但 GR00T 微调要 40 GB+。想微调 VLA 得上 48 GB 级（L40S / A6000）或 H100。</span></div>
+  <div class="route"><b>能省的一笔</b><span>VLA 微调完全可以按小时租 H100，不必自己买；本地只留一张 4090 做仿真训练与推理即可。</span></div>
+</div>
+
+<div class="pull">真机侧 G1 的板载算力足够跑 ONNX 导出的策略，而 openpi 的远程推理模式让"模型在服务器、机器人在现场"成为官方推荐做法——<strong>这台 GPU 机器不必是你的开发机，甚至不必和机器人在同一个房间。</strong></div>
+
 <h2>给你的 G1 项目：从外呼板开始的最小路径</h2>
 
-<p><strong>先解决基础设施</strong>：Isaac 系全栈要 Ubuntu + NVIDIA GPU。在那台机器到位之前，可做的是 Meta-World / mjlab / RoboCasa（MuJoCo 系，Mac 能跑）。</p>
+<p><strong>先把设备落实</strong>（见上一节）；在 GPU 机器到位之前，可做的是 Meta-World / mjlab / RoboCasa 这一档 MuJoCo 系工作——恰好也是造任务判据、读 <code>MicrowavePressButton</code> 源码的阶段，不浪费时间。</p>
 
 <p><strong>然后，第一个任务选电梯外呼板，不要选轿厢面板。</strong>理由很硬：</p>
 
